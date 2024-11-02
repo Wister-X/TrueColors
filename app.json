@@ -1,15 +1,5 @@
 {
   "expo": {
-<<<<<<< HEAD
-    "name": "truecolors",
-    "slug": "snack-c44414f3-dc06-451d-a8d5-c8d106904a70",
-    "version": "1.0.0",
-    "orientation": "portrait",
-    "icon": "./assets/icon.png",
-    "userInterfaceStyle": "light",
-    "splash": {
-      "image": "./assets/splash.png",
-=======
     "name": "TrueColors",
     "slug": "TrueColors",
     "version": "1.0.0",
@@ -19,33 +9,19 @@
     "userInterfaceStyle": "automatic",
     "splash": {
       "image": "./assets/images/splash.png",
->>>>>>> c938d46b79c0c6509d3f7c37223bd9249afe1e9f
       "resizeMode": "contain",
       "backgroundColor": "#ffffff"
     },
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": false,
+      "bundleIdentifier": "com.truecolors.app"
     },
     "android": {
       "adaptiveIcon": {
-<<<<<<< HEAD
-        "foregroundImage": "./assets/adaptive-icon.png",
-=======
         "foregroundImage": "./assets/images/adaptive-icon.png",
->>>>>>> c938d46b79c0c6509d3f7c37223bd9249afe1e9f
         "backgroundColor": "#ffffff"
-      }
-    },
-    "web": {
-<<<<<<< HEAD
-      "favicon": "./assets/favicon.png"
-    }
-  }
-}
-=======
-      "bundler": "metro",
-      "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      },
+      "package": "com.truecolors.app"
     },
     "plugins": [
       "expo-router"
@@ -55,4 +31,3 @@
     }
   }
 }
->>>>>>> c938d46b79c0c6509d3f7c37223bd9249afe1e9f

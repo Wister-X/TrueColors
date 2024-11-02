@@ -1,70 +1,209 @@
-import { Image, StyleSheet, Platform } from 'react-native';
-
-import { HelloWave } from '@/components/HelloWave';
-import ParallaxScrollView from '@/components/ParallaxScrollView';
-import { ThemedText } from '@/components/ThemedText';
-import { ThemedView } from '@/components/ThemedView';
+import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
+import { Feather, Ionicons } from '@expo/vector-icons';
+import { useRouter } from 'expo-router';
+import { commonFeatures } from '../../src/data/seasonal-color-data';
+import { StorageUtils } from '../../src/utils/storage';
 
 export default function HomeScreen() {
+  const [hasPreviousResults, setHasPreviousResults] = useState<boolean | null>(null);
+  const router = useRouter();
+
+  useEffect(() => {
+    loadResultsStatus();
+  }, []);
+
+  const loadResultsStatus = async () => {
+    const hasResults = await StorageUtils.getHasResults();
+    setHasPreviousResults(hasResults);
+  };
+
+  // Show loading state while checking results
+  if (hasPreviousResults === null) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.content}>
+          <Text>Loading...</Text>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
+  if (!hasPreviousResults) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <View style={styles.header}>
+          <View>
+            <Text style={styles.title}>Upload Selfie</Text>
+            <Text style={styles.subtitle}>Discover your personalized color palette</Text>
+          </View>
+          <TouchableOpacity>
+            <Ionicons name="settings-outline" size={24} color="#3A3A3A" />
+          </TouchableOpacity>
+        </View>
+
+        <View style={styles.main}>
+          <View style={styles.card}>
+            <Ionicons name="add-circle-outline" size={96} color="#D4A574" />
+            <Text style={styles.cardText}>
+              You don't have any results yet,{'\n'}upload a selfie to get started
+            </Text>
+            <TouchableOpacity style={styles.button} onPress={() => router.push('/(tabs)/camera' as const)}>
+              <Text style={styles.buttonText}>Upload your pics</Text>
+            </TouchableOpacity>
+          </View>
+
+          <Text style={styles.sectionTitle}>How It Works</Text>
+          <View style={styles.stepsContainer}>
+            {[
+              { step: 1, text: "Upload a selfie" },
+              { step: 2, text: "Discover your colors" },
+              { step: 3, text: "Get your color palette" }
+            ].map((item) => (
+              <View key={item.step} style={styles.stepItem}>
+                <View style={styles.stepNumber}>
+                  <Text style={styles.stepNumberText}>{item.step}</Text>
+                </View>
+                <Text style={styles.stepText}>{item.text}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      </SafeAreaView>
+    );
+  }
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({ ios: 'cmd + d', android: 'cmd + m' })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-        <ThemedText>
-          Tap the Explore tab to learn more about what's included in this starter app.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          When you're ready, run{' '}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+    <ScrollView style={styles.container}>
+      <View style={styles.header}>
+        <Text style={styles.title}>True Colors</Text>
+        <TouchableOpacity>
+          <Feather name="settings" size={24} color="#5A4A3A" />
+        </TouchableOpacity>
+      </View>
+      
+      <View style={styles.stepsContainer}>
+        {Object.values(commonFeatures.steps).map((step) => (
+          <TouchableOpacity key={step.step} style={styles.stepCard}>
+            <Text style={styles.stepTitle}>{step.title}</Text>
+            <Text style={styles.stepDescription}>{step.description}</Text>
+          </TouchableOpacity>
+        ))}
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: '#FAF7F5',
   },
-  stepContainer: {
-    gap: 8,
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
+    padding: 16,
+    paddingTop: 20,
+  },
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    color: '#3A3A3A',
+  },
+  subtitle: {
+    fontSize: 16,
+    color: '#8A8A8A',
+  },
+  main: {
+    flex: 1,
+    padding: 16,
+  },
+  card: {
+    backgroundColor: '#FFF5EB',
+    borderRadius: 16,
+    padding: 24,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
+  },
+  cardText: {
+    textAlign: 'center',
+    marginVertical: 16,
+    color: '#3A3A3A',
+  },
+  button: {
+    backgroundColor: '#3A3A3A',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 24,
+    width: '100%',
+  },
+  buttonText: {
+    color: 'white',
+    textAlign: 'center',
+    fontSize: 16,
+    fontWeight: '500',
+  },
+  sectionTitle: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    marginTop: 24,
+    marginBottom: 16,
+    color: '#3A3A3A',
+  },
+  stepsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-around',
+    paddingHorizontal: 8,
+  },
+  stepItem: {
+    alignItems: 'center',
+    flex: 1,
+    paddingHorizontal: 8,
+  },
+  stepNumber: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    backgroundColor: '#3A3A3A',
+    justifyContent: 'center',
+    alignItems: 'center',
     marginBottom: 8,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  stepNumberText: {
+    color: 'white',
+    fontSize: 20,
+    fontWeight: 'bold',
+  },
+  stepText: {
+    textAlign: 'center',
+    fontSize: 14,
+    color: '#3A3A3A',
+  },
+  // Existing styles for users with previous results
+  stepCard: {
+    backgroundColor: '#FFFFFF',
+    borderRadius: 8,
+    padding: 16,
+    marginBottom: 16,
+  },
+  stepTitle: {
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 8,
+  },
+  stepDescription: {
+    fontSize: 16,
+  },
+  content: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 24,
   },
 });
