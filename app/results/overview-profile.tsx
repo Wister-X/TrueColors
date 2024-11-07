@@ -3,6 +3,7 @@ import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, StyleSheet, Mod
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, useAnimatedGestureHandler, runOnJS } from 'react-native-reanimated';
 import { PanGestureHandler } from 'react-native-gesture-handler';
+import { ProgressCircles } from '../../components/results/progress-circles';
 
 const AnimatedText = Animated.createAnimatedComponent(Text);
 const AnimatedView = Animated.createAnimatedComponent(View);
@@ -10,19 +11,8 @@ const AnimatedView = Animated.createAnimatedComponent(View);
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 const DRAWER_HEIGHT = SCREEN_HEIGHT * 0.5;
 
-const ProgressCircles = ({ totalSteps, currentStep }) => (
-  <View style={styles.progressCircles}>
-    {[...Array(totalSteps)].map((_, index) => (
-      <View
-        key={index}
-        style={[
-          styles.progressCircle,
-          index < currentStep ? styles.progressCircleActive : {}
-        ]}
-      />
-    ))}
-  </View>
-);
+
+
 
 const ShareDrawer = () => {
   const [isOpen, setIsOpen] = useState(false);
@@ -98,7 +88,7 @@ const ShareDrawer = () => {
 };
 
 const seasonConfig = {
-  winter: { icon: 'snow-outline', color: '#4682B4', bgColor: '#F0F8FF' },
+  spring: { icon: 'flower-outline', color: '#FF6B35', bgColor: '#FFF0E6' },
 };
 
 const faceShapeConfig = {
@@ -113,7 +103,7 @@ export default function DynamicSelfieResults() {
 
   // In a real application, this would come from an API or props
   const analysisResult = {
-    season: 'winter',
+    season: 'spring',
     faceShape: 'oval',
     skinTone: 'warm',
     contrast: 'high'
@@ -193,19 +183,6 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     padding: 16,
-  },
-  progressCircles: {
-    flexDirection: 'row',
-  },
-  progressCircle: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-    backgroundColor: '#E0E0E0',
-    marginRight: 8,
-  },
-  progressCircleActive: {
-    backgroundColor: '#3A3A3A',
   },
   title: {
     fontSize: 34,

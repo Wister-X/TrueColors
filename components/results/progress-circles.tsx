@@ -1,7 +1,12 @@
 import React from 'react';
 import { View, StyleSheet } from 'react-native';
 
-const ProgressCircles = React.memo(({ totalSteps, currentStep }) => (
+interface ProgressCirclesProps {
+  totalSteps: number;
+  currentStep: number;
+}
+
+export const ProgressCircles: React.FC<ProgressCirclesProps> = React.memo(({ totalSteps, currentStep }) => (
   <View style={styles.progressCircles}>
     {[...Array(totalSteps)].map((_, index) => (
       <View
@@ -31,5 +36,3 @@ const styles = StyleSheet.create({
     backgroundColor: '#3A3A3A',
   },
 });
-
-export default ProgressCircles;

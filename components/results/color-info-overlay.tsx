@@ -1,28 +1,51 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { useAnimatedStyle, useSharedValue, withSpring, interpolateColor } from 'react-native-reanimated';
+import Animated, { 
+  useAnimatedStyle, 
+  useSharedValue, 
+  withSpring, 
+  interpolateColor 
+} from 'react-native-reanimated';
 
-const ColorInfoOverlay = ({ color, onClose }) => {
+interface Color {
+  name: string;
+  hex: string;
+}
+
+interface SeasonData {
+  textColor: string;
+  accentColor: string;
+}
+
+interface ColorInfoOverlayProps {
+  color: Color;
+  onClose: () => void;
+  seasonData: SeasonData;
+}
+
+export const ColorInfoOverlay: React.FC<ColorInfoOverlayProps> = React.memo(({ 
+  color, 
+  onClose, 
+  seasonData 
+}) => {
   const translateY = useSharedValue(100);
   const opacity = useSharedValue(0);
 
   React.useEffect(() => {
     translateY.value = withSpring(0);
     opacity.value = withSpring(1);
-  }, [translateY, opacity]);
+  }, []);
 
-  const overlayStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: translateY.value }],
-      opacity: opacity.value,
-      backgroundColor: interpolateColor(
-        opacity.value,
-        [0, 1],
-        ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)']
-      ),
-    };
-  });
+  const overlayStyle = useAnimatedStyle(() => ({
+    transform: [{ translateY: translateY.value }],
+    opacity: opacity.value,
+    backgroundColor: interpolateColor(
+      opacity.value,
+      [0, 1],
+      ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)']
+    ),
+  }));
 
   const handleClose = () => {
     translateY.value = withSpring(100);
@@ -33,14 +56,14 @@ const ColorInfoOverlay = ({ color, onClose }) => {
   return (
     <Animated.View style={[styles.colorInfoOverlay, overlayStyle]}>
       <View style={[styles.colorInfoSwatch, { backgroundColor: color.hex }]} />
-      <Text style={styles.colorInfoName}>{color.name}</Text>
-      <Text style={styles.colorInfoHex}>{color.hex}</Text>
+      <Text style={[styles.colorInfoName, { color: seasonData.textColor }]}>{color.name}</Text>
+      <Text style={[styles.colorInfoHex, { color: seasonData.accentColor }]}>{color.hex}</Text>
       <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-        <Ionicons name="close" size={24} color="#3A3A3A" />
+        <Ionicons name="close" size={24} color={seasonData.textColor} />
       </TouchableOpacity>
     </Animated.View>
   );
-};
+});
 
 const styles = StyleSheet.create({
   colorInfoOverlay: {
@@ -70,11 +93,9 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 5,
-    color: '#3A3A3A',
   },
   colorInfoHex: {
     fontSize: 18,
-    color: '#6B6B6B',
   },
   closeButton: {
     position: 'absolute',
@@ -83,5 +104,3 @@ const styles = StyleSheet.create({
     padding: 10,
   },
 });
-
-export default ColorInfoOverlay;

@@ -5,6 +5,12 @@ import { useRouter } from 'expo-router';
 import { commonFeatures } from '../../src/data/seasonal-color-data';
 import { StorageUtils } from '../../src/utils/storage';
 
+interface Step {
+  step: number;
+  title: string;
+  description: string;
+}
+
 export default function HomeScreen() {
   const [hasPreviousResults, setHasPreviousResults] = useState<boolean | null>(null);
   const router = useRouter();
@@ -83,7 +89,7 @@ export default function HomeScreen() {
       </View>
       
       <View style={styles.stepsContainer}>
-        {Object.values(commonFeatures.steps).map((step) => (
+        {Object.values(commonFeatures.steps).map((step: Step) => (
           <TouchableOpacity key={step.step} style={styles.stepCard}>
             <Text style={styles.stepTitle}>{step.title}</Text>
             <Text style={styles.stepDescription}>{step.description}</Text>
