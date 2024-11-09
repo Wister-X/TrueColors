@@ -4,15 +4,46 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-const ColorSwatch = React.memo(({ color, index, onPress, accentColor }) => {
-  const words = color.name.split(' ');
+interface Color {
+  name: string;
+  hex: string;
+}
+
+interface ColorSwatchProps {
+  name: string;
+  hex: string;
+  index: number;
+  onPress: (color: Color) => void;
+  accentColor: string;
+  size?: number;
+}
+
+export const ColorSwatch: React.FC<ColorSwatchProps> = React.memo(({ 
+  name, 
+  hex, 
+  index, 
+  onPress, 
+  accentColor, 
+  size = 50 
+}) => {
+  const words = name.split(' ');
   return (
     <AnimatedView 
       entering={FadeInDown.delay(100 * index).springify()} 
       style={styles.colorItem}
     >
-      <TouchableOpacity onPress={() => onPress(color)}>
-        <View style={[styles.colorSwatch, { backgroundColor: color.hex }]} />
+      <TouchableOpacity onPress={() => onPress({ name, hex })}>
+        <View 
+          style={[
+            styles.colorSwatch, 
+            { 
+              backgroundColor: hex,
+              width: size,
+              height: size,
+              borderRadius: size / 2
+            }
+          ]} 
+        />
       </TouchableOpacity>
       <View style={styles.colorNameContainer}>
         {words.map((word, i) => (
@@ -26,12 +57,10 @@ const ColorSwatch = React.memo(({ color, index, onPress, accentColor }) => {
 const styles = StyleSheet.create({
   colorItem: {
     alignItems: 'center',
+    marginBottom: 12,
     width: '20%',
   },
   colorSwatch: {
-    width: 50,
-    height: 50,
-    borderRadius: 25,
     borderWidth: 2,
     borderColor: 'white',
     shadowColor: '#000',
@@ -39,7 +68,6 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.1,
     shadowRadius: 4,
     elevation: 3,
-    marginBottom: 4,
   },
   colorNameContainer: {
     alignItems: 'center',
@@ -51,5 +79,3 @@ const styles = StyleSheet.create({
     lineHeight: 12,
   },
 });
-
-export default ColorSwatch;

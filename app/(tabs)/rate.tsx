@@ -1,2 +1,2 @@
-import RateScreen from '../../src/screens/RateScreen';
+import RateScreen from '../rate';
 export default RateScreen; 

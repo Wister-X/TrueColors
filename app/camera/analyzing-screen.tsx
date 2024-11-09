@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { View, Text, StyleSheet, SafeAreaView, Dimensions } from 'react-native';
+import { View, Text, StyleSheet, SafeAreaView, Dimensions, ViewStyle, TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { 
   useSharedValue, 
@@ -8,14 +8,41 @@ import Animated, {
   withSpring, 
   FadeIn, 
   SlideInRight,
-  SlideOutLeft
+  SlideOutLeft,
+  WithSpringConfig,
+  WithTimingConfig
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
+
+// Type definitions
+interface Step {
+  icon: keyof typeof Ionicons.glyphMap;
+  text: string;
+}
+
+interface StepItemProps {
+  step: Step;
+  index: number;
+  currentStep: number;
+}
+
+interface StylesType {
+  [key: string]: ViewStyle | TextStyle;
+}
 
 const AnimatedLinearGradient = Animated.createAnimatedComponent(LinearGradient);
 const { width, height } = Dimensions.get('window');
 
-const steps = [
+const springConfig: WithSpringConfig = {
+  stiffness: 100,
+  damping: 10
+};
+
+const timingConfig: WithTimingConfig = {
+  duration: 500
+};
+
+const steps: Step[] = [
   { icon: 'color-palette-outline', text: "Analyzing skin tone" },
   { icon: 'sparkles-outline', text: "Determining color harmony" },
   { icon: 'sunny-outline', text: "Evaluating warm colors" },
@@ -23,12 +50,12 @@ const steps = [
   { icon: 'rainy-outline', text: "Finalizing your palette" },
 ];
 
-const StepItem = React.memo(({ step, index, currentStep }) => {
+const StepItem: React.FC<StepItemProps> = React.memo(({ step, index, currentStep }) => {
   const animatedStyle = useAnimatedStyle(() => {
     return {
-      opacity: withTiming(index <= currentStep ? 1 : 0.5, { duration: 500 }),
+      opacity: withTiming(index <= currentStep ? 1 : 0.5, timingConfig),
       transform: [
-        { translateX: withSpring(index <= currentStep ? 0 : -20, { stiffness: 100, damping: 10 }) },
+        { translateX: withSpring(index <= currentStep ? 0 : -20, springConfig) },
       ],
     };
   }, [currentStep]);
@@ -43,14 +70,14 @@ const StepItem = React.memo(({ step, index, currentStep }) => {
   );
 });
 
-export default function AnalyzingPageVariation() {
-  const [progress, setProgress] = useState(0);
-  const [currentStep, setCurrentStep] = useState(0);
-  const progressWidth = useSharedValue(0);
+const AnalyzingPageVariation: React.FC = () => {
+  const [progress, setProgress] = useState<number>(0);
+  const [currentStep, setCurrentStep] = useState<number>(0);
+  const progressWidth = useSharedValue<number>(0);
 
   useEffect(() => {
     const interval = setInterval(() => {
-      setProgress((prevProgress) => {
+      setProgress((prevProgress: number) => {
         if (prevProgress >= 100) {
           clearInterval(interval);
           return 100;
@@ -112,9 +139,9 @@ export default function AnalyzingPageVariation() {
       </View>
     </SafeAreaView>
   );
-}
+};
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<StylesType>({
   container: {
     flex: 1,
     backgroundColor: '#FAF7F5',
@@ -130,7 +157,7 @@ const styles = StyleSheet.create({
   header: {
     alignItems: 'center',
     width: '100%',
-    height: 80, // Fixed height
+    height: 80,
   },
   title: {
     fontSize: 28,
@@ -170,7 +197,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     marginBottom: 20,
-    height: 44, // Fixed height
+    height: 44,
   },
   iconContainer: {
     padding: 10,
@@ -211,3 +238,5 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 });
+
+export default AnalyzingPageVariation;

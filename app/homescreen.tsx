@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, FlatList, Dimensions, Modal } from 'react-native';
+import { View, Text, SafeAreaView, StyleSheet, TouchableOpacity, ScrollView, FlatList, Dimensions, Modal, ViewStyle, TextStyle } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { 
   useAnimatedStyle, 
@@ -10,22 +10,58 @@ import Animated, {
   FadeIn,
   FadeInDown
 } from 'react-native-reanimated';
-import { PanGestureHandler } from 'react-native-gesture-handler';
-import { useNavigation } from '@react-navigation/native';
+import { PanGestureHandler, GestureEventPayload, PanGestureHandlerEventPayload } from 'react-native-gesture-handler';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
 
 const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
 const DRAWER_HEIGHT = SCREEN_HEIGHT * 0.7;
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-const PreviousAnalysisItem = ({ date }) => (
+// Type definitions
+type RootStackParamList = {
+  Home: undefined;
+  SelfieTips: undefined;
+  Results: undefined;
+};
+
+interface PreviousAnalysis {
+  id: string;
+  date: string;
+}
+
+interface PreviousAnalysisItemProps {
+  date: string;
+}
+
+interface SettingItemProps {
+  icon: keyof typeof Ionicons.glyphMap;
+  text: string;
+  color: string;
+  onPress: () => void;
+}
+
+interface SettingsDrawerProps {
+  isVisible: boolean;
+  setIsVisible: (visible: boolean) => void;
+}
+
+interface SettingOption extends Omit<SettingItemProps, 'onPress'> {
+  onPress: () => void;
+}
+
+interface StylesType {
+  [key: string]: ViewStyle | TextStyle;
+}
+
+const PreviousAnalysisItem: React.FC<PreviousAnalysisItemProps> = ({ date }) => (
   <View style={styles.analysisItem}>
     <View style={styles.analysisThumbnail} />
     <Text style={styles.analysisDate}>Analyzed on {date}</Text>
   </View>
 );
 
-const SettingItem = ({ icon, text, color, onPress }) => (
+const SettingItem: React.FC<SettingItemProps> = ({ icon, text, color, onPress }) => (
   <TouchableOpacity style={styles.settingOption} onPress={onPress}>
     <View style={styles.settingOptionLeft}>
       <Ionicons name={icon} size={24} color={color} />
@@ -35,7 +71,7 @@ const SettingItem = ({ icon, text, color, onPress }) => (
   </TouchableOpacity>
 );
 
-const SettingsDrawer = ({ isVisible, setIsVisible }) => {
+const SettingsDrawer: React.FC<SettingsDrawerProps> = ({ isVisible, setIsVisible }) => {
   const translateY = useSharedValue(DRAWER_HEIGHT);
 
   useEffect(() => {
@@ -50,7 +86,7 @@ const SettingsDrawer = ({ isVisible, setIsVisible }) => {
     transform: [{ translateY: translateY.value }],
   }));
 
-  const gestureHandler = useAnimatedGestureHandler({
+  const gestureHandler = useAnimatedGestureHandler<PanGestureHandlerEventPayload, { startY: number }>({
     onStart: (_, ctx) => {
       ctx.startY = translateY.value;
     },
@@ -67,11 +103,11 @@ const SettingsDrawer = ({ isVisible, setIsVisible }) => {
     },
   });
 
-  const closeDrawer = () => {
+  const closeDrawer = (): void => {
     setIsVisible(false);
   };
 
-  const settingsOptions = [
+  const settingsOptions: SettingOption[] = [
     { icon: 'flower-outline', text: 'Share it with your friends', color: '#FF69B4', onPress: () => {} },
     { icon: 'mail-outline', text: 'Contact Support', color: '#4169E1', onPress: () => {} },
     { icon: 'star-outline', text: 'Rate Us', color: '#FFD700', onPress: () => {} },
@@ -108,18 +144,18 @@ const SettingsDrawer = ({ isVisible, setIsVisible }) => {
   );
 };
 
-export default function HomeScreenWithResults() {
-  const navigation = useNavigation();
-  const [isSettingsVisible, setIsSettingsVisible] = useState(false);
+const HomeScreenWithResults: React.FC = () => {
+  const navigation = useNavigation<NavigationProp<RootStackParamList>>();
+  const [isSettingsVisible, setIsSettingsVisible] = useState<boolean>(false);
   
-  const previousAnalyses = [
+  const previousAnalyses: PreviousAnalysis[] = [
     { id: '1', date: "May 15, 2023" },
     { id: '2', date: "May 10, 2023" },
     { id: '3', date: "May 5, 2023" },
     { id: '4', date: "April 30, 2023" },
   ];
 
-  const handleUploadPress = () => {
+  const handleUploadPress = (): void => {
     navigation.navigate('SelfieTips');
   };
 
@@ -179,9 +215,9 @@ export default function HomeScreenWithResults() {
       />
     </SafeAreaView>
   );
-}
+};
 
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<StylesType>({
   container: {
     flex: 1,
     backgroundColor: '#FAF7F5',
@@ -349,3 +385,5 @@ const styles = StyleSheet.create({
     color: '#3A3A3A',
   },
 });
+
+export default HomeScreenWithResults;

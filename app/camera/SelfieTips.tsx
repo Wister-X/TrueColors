@@ -1,27 +1,59 @@
 import React from 'react';
-import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, SafeAreaView } from 'react-native';
-import { launchImageLibrary } from 'react-native-image-picker';
+import { View, Text, ScrollView, Image, TouchableOpacity, StyleSheet, SafeAreaView, ImageStyle, ViewStyle, TextStyle } from 'react-native';
+import { launchImageLibrary, ImageLibraryOptions, ImagePickerResponse, Asset } from 'react-native-image-picker';
+
+// Interfaces
+interface TitleProps {
+  children: React.ReactNode;
+}
+
+interface ExampleImageProps {
+  type: 'good' | 'bad';
+  index: number;
+}
+
+interface ExamplesSectionProps {
+  title: string;
+  type: 'good' | 'bad';
+}
+
+interface UploadButtonProps {
+  onPress: () => void;
+}
+
+interface Tip {
+  emoji: string;
+  text: string;
+}
+
+interface StylesType {
+  [key: string]: ViewStyle | TextStyle | ImageStyle;
+}
 
 // Components
-const Title = ({ children }) => <Text style={styles.title}>{children}</Text>;
+const Title: React.FC<TitleProps> = ({ children }) => <Text style={styles.title}>{children}</Text>;
 
-const TipsCard = () => (
-  <View style={styles.tipsCard}>
-    {[
-      { emoji: '🕶️', text: 'No hats, glasses, or covered faces' },
-      { emoji: '💡', text: 'Use good lighting' },
-      { emoji: '👀', text: 'Look straight into the camera' },
-      { emoji: '🚫', text: "Don't use any filters" },
-    ].map((tip, index) => (
-      <View key={index} style={styles.tipItem}>
-        <Text style={styles.tipEmoji}>{tip.emoji}</Text>
-        <Text style={styles.tipText}>{tip.text}</Text>
-      </View>
-    ))}
-  </View>
-);
+const TipsCard: React.FC = () => {
+  const tips: Tip[] = [
+    { emoji: '🕶️', text: 'No hats, glasses, or covered faces' },
+    { emoji: '💡', text: 'Use good lighting' },
+    { emoji: '👀', text: 'Look straight into the camera' },
+    { emoji: '🚫', text: "Don't use any filters" },
+  ];
 
-const ExampleImage = ({ type, index }) => (
+  return (
+    <View style={styles.tipsCard}>
+      {tips.map((tip, index) => (
+        <View key={index} style={styles.tipItem}>
+          <Text style={styles.tipEmoji}>{tip.emoji}</Text>
+          <Text style={styles.tipText}>{tip.text}</Text>
+        </View>
+      ))}
+    </View>
+  );
+};
+
+const ExampleImage: React.FC<ExampleImageProps> = ({ type, index }) => (
   <View style={styles.imageContainer}>
     <Image
       source={{ uri: `https://via.placeholder.com/120x150.png?text=${type}+example+${index+1}` }}
@@ -33,7 +65,7 @@ const ExampleImage = ({ type, index }) => (
   </View>
 );
 
-const ExamplesSection = ({ title, type }) => (
+const ExamplesSection: React.FC<ExamplesSectionProps> = ({ title, type }) => (
   <View>
     <Text style={styles.sectionTitle}>{title}</Text>
     <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.examplesScroll}>
@@ -44,21 +76,25 @@ const ExamplesSection = ({ title, type }) => (
   </View>
 );
 
-const UploadButton = ({ onPress }) => (
+const UploadButton: React.FC<UploadButtonProps> = ({ onPress }) => (
   <TouchableOpacity style={styles.button} onPress={onPress}>
     <Text style={styles.buttonText}>Upload or take a selfie</Text>
   </TouchableOpacity>
 );
 
 // Main Component
-const SelfieTips = () => {
-  const handleImageUpload = () => {
-    launchImageLibrary({ mediaType: 'photo' }, (response) => {
+const SelfieTips: React.FC = () => {
+  const handleImageUpload = (): void => {
+    const options: ImageLibraryOptions = {
+      mediaType: 'photo',
+    };
+
+    launchImageLibrary(options, (response: ImagePickerResponse) => {
       if (response.didCancel) {
         console.log('User cancelled image picker');
       } else if (response.errorCode) {
         console.log('ImagePicker Error: ', response.errorMessage);
-      } else {
+      } else if (response.assets && response.assets.length > 0) {
         const source = { uri: response.assets[0].uri };
         console.log(source);
         // Handle the uploaded image here
@@ -80,7 +116,7 @@ const SelfieTips = () => {
 };
 
 // Styles
-const styles = StyleSheet.create({
+const styles = StyleSheet.create<StylesType>({
   container: {
     flex: 1,
     backgroundColor: '#FAF7F5',
