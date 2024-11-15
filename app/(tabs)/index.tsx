@@ -2,14 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, SafeAreaView } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useRouter } from 'expo-router';
-import { commonFeatures } from '../../src/data/seasonal-color-data';
+import { Step } from '../../data/interfaces/interfaces-definition';
+import { commonFeatures } from '../../data/seasons/seasons-index';
 import { StorageUtils } from '../../src/utils/storage';
-
-interface Step {
-  step: number;
-  title: string;
-  description: string;
-}
 
 export default function HomeScreen() {
   const [hasPreviousResults, setHasPreviousResults] = useState<boolean | null>(null);

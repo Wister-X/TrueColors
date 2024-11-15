@@ -1,171 +1,163 @@
-import React, { useState } from 'react';
-import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, StyleSheet, Modal, Dimensions, Image } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring, useAnimatedGestureHandler, runOnJS } from 'react-native-reanimated';
-import { PanGestureHandler } from 'react-native-gesture-handler';
-import { ProgressCircles } from '../../components/results/progress-circles';
+import { useState } from 'react';
+import { Image, SafeAreaView, ScrollView, StyleSheet, TouchableOpacity, View } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
+import { ComponentProps } from 'react';
 
-const AnimatedText = Animated.createAnimatedComponent(Text);
-const AnimatedView = Animated.createAnimatedComponent(View);
+import { ProgressCircles } from '@/components/results/progress-circles';
+import { ShareDrawer } from '@/components/results/share-drawer';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { SEASONS } from '@/data/seasons/seasons-index';
+import { FaceShape, Undertone } from '@/data/types/types-definition';
+import { SeasonData, SeasonFamily } from '@/data/interfaces/interfaces-definition';
 
-const { height: SCREEN_HEIGHT, width: SCREEN_WIDTH } = Dimensions.get('window');
-const DRAWER_HEIGHT = SCREEN_HEIGHT * 0.5;
+type IconName = ComponentProps<typeof Ionicons>['name'];
 
+const faceShapeConfig: Record<FaceShape, IconName> = {
+  'Oval': 'ellipse-outline' as IconName,
+  'Round': 'at-circle-outline' as IconName,
+  'Square': 'square-outline' as IconName,
+  'Heart': 'heart-outline' as IconName,
+  'Diamond': 'diamond' as IconName,
+  'Rectangle': 'tablet-landscape-outline' as IconName,
+  'Triangle': 'triangle-outline' as IconName
+} as const;
 
+interface OverviewProfileProps {
+  seasonId: keyof typeof SEASONS;
+  imageUri?: string;
+}
 
+interface Characteristics {
+  faceShape: FaceShape;
+  undertone: Undertone;
+  contrast: string;
+}
 
-const ShareDrawer = () => {
-  const [isOpen, setIsOpen] = useState(false);
-  const translateY = useSharedValue(DRAWER_HEIGHT);
+interface ResultItem {
+  icon: IconName;
+  label: string;
+  value: string;
+}
 
-  const rBottomSheetStyle = useAnimatedStyle(() => {
-    return {
-      transform: [{ translateY: translateY.value }],
-    };
-  });
+const AnimatedThemedText = Animated.createAnimatedComponent(ThemedText);
+const AnimatedThemedView = Animated.createAnimatedComponent(ThemedView);
 
-  React.useEffect(() => {
-    if (isOpen) {
-      translateY.value = withSpring(0, { damping: 50 });
+export default function OverviewProfile({ seasonId, imageUri }: OverviewProfileProps) {
+  const [currentStep] = useState(1);
+  const [isShareDrawerOpen, setIsShareDrawerOpen] = useState(false);
+
+  const seasonFamily = SEASONS[seasonId] as SeasonFamily;
+  const season = Object.values(seasonFamily)[0] as SeasonData;
+
+  if (!season) {
+    return (
+      <SafeAreaView style={styles.container}>
+        <ThemedText style={styles.errorText}>Season not found</ThemedText>
+      </SafeAreaView>
+    );
+  }
+
+  const characteristics: Characteristics = {
+    faceShape: season.characteristics?.faceShape || 'Oval',
+    undertone: season.characteristics?.undertone || 'Neutral',
+    contrast: season.characteristics?.contrast || 'Medium'
+  };
+
+  const results: ResultItem[] = [
+    { 
+      icon: 'color-palette-outline' as IconName, 
+      label: 'Season', 
+      value: season.name 
+    },
+    { 
+      icon: faceShapeConfig[characteristics.faceShape] as IconName, 
+      label: 'Face Shape', 
+      value: characteristics.faceShape
+    },
+    { 
+      icon: 'water-outline' as IconName, 
+      label: 'Undertone', 
+      value: characteristics.undertone
+    },
+    { 
+      icon: 'contrast-outline' as IconName, 
+      label: 'Contrast', 
+      value: characteristics.contrast
     }
-  }, [isOpen]);
-
-  const openDrawer = () => {
-    setIsOpen(true);
-  };
-
-  const shareOptions = [
-    { icon: 'flower-outline', text: 'Share it with your friends', color: '#FF69B4' },
-    { icon: 'mail-outline', text: 'Contact Support', color: '#4169E1' },
-    { icon: 'diamond-outline', text: 'Rate Us', color: '#9370DB' },
-    { icon: 'logo-instagram', text: 'Follow us on IG', color: '#C13584' },
-    { icon: 'lock-closed-outline', text: 'Privacy Policy', color: '#FFD700' },
   ];
 
-  const gestureHandler = useAnimatedGestureHandler({
-    onStart: (_, ctx) => {
-      ctx.startY = translateY.value;
-    },
-    onActive: (event, ctx) => {
-      translateY.value = Math.max(ctx.startY + event.translationY, 0);
-    },
-    onEnd: (event) => {
-      if (event.velocityY > 500 || event.translationY > DRAWER_HEIGHT / 2) {
-        translateY.value = withSpring(DRAWER_HEIGHT, { damping: 50 });
-        runOnJS(setIsOpen)(false);
-      } else {
-        translateY.value = withSpring(0, { damping: 50 });
-      }
-    },
-  });
-
   return (
-    <>
-      <TouchableOpacity 
-        style={styles.shareButton} 
-        onPress={openDrawer}
-      >
-        <Ionicons name="share-outline" size={20} color="white" />
-        <Text style={styles.shareButtonText}>Share</Text>
-      </TouchableOpacity>
-      <Modal visible={isOpen} transparent animationType="none">
-        <TouchableOpacity style={styles.modalOverlay} onPress={() => setIsOpen(false)}>
-          <PanGestureHandler onGestureEvent={gestureHandler}>
-            <Animated.View style={[styles.bottomSheet, rBottomSheetStyle]}>
-              <View style={styles.bottomSheetHandle} />
-              {shareOptions.map((option, index) => (
-                <TouchableOpacity key={index} style={styles.shareOption}>
-                  <Ionicons name={option.icon} size={24} color={option.color} />
-                  <Text style={styles.shareOptionText}>{option.text}</Text>
-                </TouchableOpacity>
-              ))}
-            </Animated.View>
-          </PanGestureHandler>
-        </TouchableOpacity>
-      </Modal>
-    </>
-  );
-};
-
-const seasonConfig = {
-  spring: { icon: 'flower-outline', color: '#FF6B35', bgColor: '#FFF0E6' },
-};
-
-const faceShapeConfig = {
-  oval: 'ellipse-outline',
-  square: 'square-outline',
-  triangle: 'triangle-outline',
-};
-
-export default function DynamicSelfieResults() {
-  const [currentStep, setCurrentStep] = useState(1);
-  const totalSteps = 6;
-
-  // In a real application, this would come from an API or props
-  const analysisResult = {
-    season: 'spring',
-    faceShape: 'oval',
-    skinTone: 'warm',
-    contrast: 'high'
-  };
-
-  const { season, faceShape, skinTone, contrast } = analysisResult;
-
-  const seasonData = seasonConfig[season.toLowerCase()];
-  const faceShapeIcon = faceShapeConfig[faceShape.toLowerCase()] || 'ellipse-outline';
-
-  const results = [
-    { icon: seasonData.icon, label: 'Season', value: season },
-    { icon: faceShapeIcon, label: 'Face Shape', value: faceShape },
-    { icon: 'water-outline', label: 'Skin Tone', value: skinTone },
-    { icon: 'contrast-outline', label: 'Contrast', value: contrast },
-  ];
-
-  const ResultItem = ({ item, index }) => (
-    <AnimatedView 
-      entering={FadeInDown.delay(300 + index * 100).springify()} 
-      style={[styles.resultItem, { backgroundColor: seasonData.bgColor }]}
-    >
-      <Ionicons name={item.icon} size={48} color={seasonData.color} />
-      <Text style={styles.resultLabel}>{item.label}</Text>
-      <Text style={styles.resultValue}>{item.value}</Text>
-    </AnimatedView>
-  );
-
-  return (
-    <SafeAreaView style={styles.container}>
+    <SafeAreaView style={[styles.container, { backgroundColor: season.bgColor }]}>
       <ScrollView style={styles.scrollView}>
         <View style={styles.header}>
-          <ProgressCircles totalSteps={totalSteps} currentStep={currentStep} />
+          <ProgressCircles totalSteps={6} currentStep={currentStep} />
           <TouchableOpacity>
-            <Ionicons name="close" size={24} color="#3A3A3A" />
+            <Ionicons name="close" size={24} color={season.textColor} />
           </TouchableOpacity>
         </View>
 
-        <AnimatedText entering={FadeInDown.springify()} style={styles.title}>Your Color Profile</AnimatedText>
-        <AnimatedText entering={FadeInDown.delay(100).springify()} style={styles.subtitle}>
-          Discover your unique color characteristics
-        </AnimatedText>
+        <ThemedView style={styles.card}>
+          <AnimatedThemedText
+            entering={FadeInDown.springify()}
+            type="title"
+            style={{ color: season.textColor }}
+          >
+            Your Color Profile
+          </AnimatedThemedText>
 
-        <View style={styles.card}>
-          <AnimatedView entering={FadeInDown.delay(200).springify()} style={styles.imageContainer}>
+          <AnimatedThemedText
+            entering={FadeInDown.delay(100).springify()}
+            type="subtitle"
+            style={{ color: season.accentColor }}
+          >
+            {season.description}
+          </AnimatedThemedText>
+
+          {imageUri && (
             <Image
-              source={{ uri: 'https://via.placeholder.com/200' }}
-              style={[styles.userImage, { borderColor: seasonData.color }]}
+              source={{ uri: imageUri }}
+              style={[styles.userImage, { borderColor: season.accentColor }]}
             />
-          </AnimatedView>
+          )}
 
           <View style={styles.resultsGrid}>
             {results.map((result, index) => (
-              <ResultItem key={result.label} item={result} index={index} />
+              <AnimatedThemedView 
+                key={result.label}
+                entering={FadeInDown.delay(300 + index * 100).springify()} 
+                style={[styles.resultItem, { backgroundColor: season.bgColor }]}
+              >
+                <Ionicons name={result.icon} size={48} color={season.accentColor} />
+                <ThemedText style={[styles.resultLabel, { color: season.textColor }]}>
+                  {result.label}
+                </ThemedText>
+                <ThemedText style={[styles.resultValue, { color: season.accentColor }]}>
+                  {result.value}
+                </ThemedText>
+              </AnimatedThemedView>
             ))}
           </View>
-        </View>
 
-        <View style={styles.shareContainer}>
-          <ShareDrawer />
-        </View>
+          <AnimatedThemedView
+            entering={FadeInDown.delay(700).springify()}
+            style={[styles.tipContainer, {
+              backgroundColor: season.bgColor,
+              borderColor: season.accentColor
+            }]}
+          >
+            <ThemedText type="defaultSemiBold" style={{ color: season.textColor }}>
+              Your Characteristics
+            </ThemedText>
+            <ThemedText style={{ color: season.accentColor }}>
+              {season.seasonCharacteristics}
+            </ThemedText>
+          </AnimatedThemedView>
+        </ThemedView>
       </ScrollView>
+
+      <ShareDrawer isOpen={isShareDrawerOpen} setIsOpen={setIsShareDrawerOpen} />
     </SafeAreaView>
   );
 }
@@ -173,7 +165,7 @@ export default function DynamicSelfieResults() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#FFF5E1',
+    backgroundColor: '#FAF7F5',
   },
   scrollView: {
     flex: 1,
@@ -184,66 +176,74 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     padding: 16,
   },
-  title: {
-    fontSize: 34,
-    fontWeight: 'bold',
-    color: '#3A3A3A',
-    marginBottom: 8,
-    paddingHorizontal: 16,
-  },
-  subtitle: {
-    fontSize: 18,
-    color: '#6B6B6B',
-    marginBottom: 24,
-    paddingHorizontal: 16,
-  },
   card: {
     backgroundColor: 'white',
     borderRadius: 24,
     padding: 24,
     margin: 16,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: 2,
-    },
+    shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
-  imageContainer: {
-    alignItems: 'center',
-    marginBottom: 32,
+  errorText: {
+    color: 'red',
+    fontSize: 18,
+    textAlign: 'center',
+    marginTop: 50,
+  },
+  tipContainer: {
+    borderRadius: 16,
+    padding: 16,
+    marginTop: 24,
+    borderWidth: 1,
+  },
+  title: {
+    fontSize: 34,
+    fontWeight: 'bold',
+    color: '#3A3A3A',
+    marginBottom: 8,
+  },
+  subtitle: {
+    fontSize: 18,
+    color: '#6B6B6B',
+    marginBottom: 24,
   },
   userImage: {
-    width: 200,
-    height: 200,
-    borderRadius: 100,
-    borderWidth: 8,
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    marginVertical: 24,
+    borderWidth: 3,
   },
   resultsGrid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     justifyContent: 'space-between',
+    marginTop: 24,
   },
   resultItem: {
     width: '48%',
+    backgroundColor: 'white',
     borderRadius: 16,
     padding: 16,
-    alignItems: 'center',
     marginBottom: 16,
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 3.84,
+    elevation: 3,
   },
   resultLabel: {
     fontSize: 14,
-    color: '#6B6B6B',
     marginTop: 8,
-    marginBottom: 4,
   },
   resultValue: {
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: '600',
-    color: '#3A3A3A',
-    textTransform: 'capitalize',
+    marginTop: 4,
   },
   shareContainer: {
     alignItems: 'flex-end',
@@ -261,48 +261,5 @@ const styles = StyleSheet.create({
     color: 'white',
     marginLeft: 8,
     fontSize: 16,
-  },
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
-  bottomSheet: {
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    height: DRAWER_HEIGHT,
-    backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-    elevation: 5,
-  },
-  bottomSheetHandle: {
-    width: 40,
-    height: 4,
-    backgroundColor: '#00000020',
-    alignSelf: 'center',
-    marginBottom: 20,
-    borderRadius: 2,
-  },
-  shareOption: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#00000010',
-  },
-  shareOptionText: {
-    marginLeft: 15,
-    fontSize: 16,
-    color: '#3A3A3A',
-  },
+  }
 });

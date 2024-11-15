@@ -1,38 +1,45 @@
 import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
+import { ColorInfo } from '@/data/interfaces/interfaces-definition';
+import { ANIMATION_DELAYS, SPRING_CONFIG } from './animation-config';
 
 const AnimatedView = Animated.createAnimatedComponent(View);
 
-interface Color {
+export interface ColorSwatchProps {
   name: string;
   hex: string;
-}
-
-interface ColorSwatchProps {
-  name: string;
-  hex: string;
+  description?: string;
   index: number;
-  onPress: (color: Color) => void;
+  onPress: (color: ColorInfo) => void;
   accentColor: string;
   size?: number;
 }
 
 export const ColorSwatch: React.FC<ColorSwatchProps> = React.memo(({ 
   name, 
-  hex, 
+  hex,
+  description = '', 
   index, 
   onPress, 
   accentColor, 
   size = 50 
 }) => {
-  const words = name.split(' ');
+  const words = React.useMemo(() => name.split(' '), [name]);
+  
+  const handlePress = React.useCallback(() => {
+    onPress({ name, hex, description });
+  }, [name, hex, description, onPress]);
+
   return (
     <AnimatedView 
-      entering={FadeInDown.delay(100 * index).springify()} 
+      entering={FadeInDown.delay(ANIMATION_DELAYS.CONTENT + (index * 50)).springify()} 
       style={styles.colorItem}
     >
-      <TouchableOpacity onPress={() => onPress({ name, hex })}>
+      <TouchableOpacity 
+        onPress={handlePress}
+        activeOpacity={0.7}
+      >
         <View 
           style={[
             styles.colorSwatch, 
@@ -47,7 +54,14 @@ export const ColorSwatch: React.FC<ColorSwatchProps> = React.memo(({
       </TouchableOpacity>
       <View style={styles.colorNameContainer}>
         {words.map((word, i) => (
-          <Text key={i} style={[styles.colorName, { color: accentColor }]}>{word}</Text>
+          <Text 
+            key={`${word}-${i}`}
+            style={[styles.colorName, { color: accentColor }]}
+            numberOfLines={1}
+            ellipsizeMode="tail"
+          >
+            {word}
+          </Text>
         ))}
       </View>
     </AnimatedView>
@@ -72,10 +86,14 @@ const styles = StyleSheet.create({
   colorNameContainer: {
     alignItems: 'center',
     marginTop: 4,
+    width: '100%',
   },
   colorName: {
     fontSize: 10,
     textAlign: 'center',
     lineHeight: 12,
+    width: '100%',
   },
 });
+
+ColorSwatch.displayName = 'ColorSwatch';

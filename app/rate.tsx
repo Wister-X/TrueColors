@@ -10,7 +10,7 @@ export default function RateScreen() {
   const handleRating = () => {
     setRated(true);
     setTimeout(() => {
-      router.replace('/src/screens/main/notification-screen');
+      router.replace('/notification');
     }, 1000);
   };
 

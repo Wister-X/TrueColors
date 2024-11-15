@@ -1,143 +1,121 @@
-import React from 'react';
-import { View, Text, Modal, TouchableOpacity, TouchableWithoutFeedback, StyleSheet, Dimensions } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity, Share } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { 
   useAnimatedStyle, 
   useSharedValue, 
-  withSpring, 
-  useAnimatedGestureHandler 
+  withSpring,
+  runOnJS,
+  FadeInDown 
 } from 'react-native-reanimated';
-import { PanGestureHandler, PanGestureHandlerGestureEvent } from 'react-native-gesture-handler';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { ShareOption, SeasonData } from '@/data/interfaces/interfaces-definition';
+import { ANIMATION_DELAYS, SPRING_CONFIG } from './animation-config';
 
-const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const DRAWER_HEIGHT = SCREEN_HEIGHT * 0.5;
-
-const AnimatedView = Animated.createAnimatedComponent(View);
-
-interface ShareOption {
-  icon: React.ComponentProps<typeof Ionicons>['name'];
-  text: string;
-  color: string;
-  onPress?: () => void;
-}
+const AnimatedThemedView = Animated.createAnimatedComponent(ThemedView);
 
 interface ShareDrawerProps {
   isOpen: boolean;
   setIsOpen: (isOpen: boolean) => void;
-  customOptions?: ShareOption[];
+  seasonData: SeasonData;
 }
 
-type ContextType = {
-  startY: number;
-};
+export const ShareDrawer: React.FC<ShareDrawerProps> = React.memo(({ 
+  isOpen, 
+  setIsOpen,
+  seasonData
+}) => {
+  const translateY = useSharedValue(300);
 
-export const ShareDrawer: React.FC<ShareDrawerProps> = React.memo(({ isOpen, setIsOpen, customOptions }) => {
-  const translateY = useSharedValue(DRAWER_HEIGHT);
+  useEffect(() => {
+    translateY.value = withSpring(isOpen ? 0 : 300, SPRING_CONFIG);
+  }, [isOpen]);
 
-  const rBottomSheetStyle = useAnimatedStyle(() => ({
+  const handleShare = React.useCallback(async () => {
+    try {
+      await Share.share({
+        message: `Check out my ${seasonData.name} color analysis results!`,
+      });
+      runOnJS(setIsOpen)(false);
+    } catch (error) {
+      console.error(error);
+    }
+  }, [setIsOpen, seasonData.name]);
+
+  const drawerStyle = useAnimatedStyle(() => ({
     transform: [{ translateY: translateY.value }],
   }));
 
-  React.useEffect(() => {
-    translateY.value = withSpring(isOpen ? 0 : DRAWER_HEIGHT, { damping: 50 });
-  }, [isOpen, translateY]);
-
-  const defaultShareOptions: ShareOption[] = [
-    { icon: 'flower-outline', text: 'Share with friends', color: '#FF69B4' },
-    { icon: 'mail-outline', text: 'Contact Support', color: '#4169E1' },
-    { icon: 'diamond-outline', text: 'Rate Us', color: '#9370DB' },
-    { icon: 'logo-instagram', text: 'Follow us on Instagram', color: '#C13584' },
-    { icon: 'lock-closed-outline', text: 'Privacy Policy', color: '#FFD700' },
-  ];
-
-  const shareOptions = customOptions || defaultShareOptions;
-
-  const gestureHandler = useAnimatedGestureHandler<
-    PanGestureHandlerGestureEvent,
-    ContextType
-  >({
-    onStart: (_, context) => {
-      context.startY = translateY.value;
-    },
-    onActive: (event, context) => {
-      translateY.value = Math.max(context.startY + event.translationY, 0);
-    },
-    onEnd: (event) => {
-      if (event.velocityY > 500 || event.translationY > DRAWER_HEIGHT / 2) {
-        translateY.value = withSpring(DRAWER_HEIGHT, { damping: 50 });
-        runOnJS(setIsOpen)(false);
-      } else {
-        translateY.value = withSpring(0, { damping: 50 });
-      }
-    },
-  });
-
   return (
-    <Modal visible={isOpen} transparent animationType="fade">
-      <TouchableWithoutFeedback onPress={() => setIsOpen(false)}>
-        <View style={styles.modalOverlay} />
-      </TouchableWithoutFeedback>
-      <PanGestureHandler onGestureEvent={gestureHandler}>
-        <AnimatedView style={[styles.bottomSheet, rBottomSheetStyle]}>
-          <View style={styles.bottomSheetHandle} />
-          {shareOptions.map((option, index) => (
-            <TouchableOpacity 
-              key={index} 
-              style={styles.shareOption}
-              onPress={option.onPress}
-            >
-              <Ionicons name={option.icon} size={24} color={option.color} />
-              <Text style={styles.shareOptionText}>{option.text}</Text>
-            </TouchableOpacity>
-          ))}
-        </AnimatedView>
-      </PanGestureHandler>
-    </Modal>
+    <AnimatedThemedView 
+      style={[styles.container, drawerStyle]}
+      entering={FadeInDown.delay(ANIMATION_DELAYS.DRAWER).springify()}
+    >
+      <View style={styles.handle} />
+      <ThemedText 
+        type="title" 
+        style={[styles.title, { color: seasonData.textColor }]}
+      >
+        Share Results
+      </ThemedText>
+      <TouchableOpacity 
+        style={[styles.shareButton, { backgroundColor: seasonData.accentColor }]}
+        onPress={handleShare}
+      >
+        <Ionicons name="share-social" size={24} color="#FFFFFF" />
+        <ThemedText style={styles.shareButtonText}>
+          Share Your Results
+        </ThemedText>
+      </TouchableOpacity>
+    </AnimatedThemedView>
   );
 });
 
 const styles = StyleSheet.create({
-  modalOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.4)',
-  },
-  bottomSheet: {
+  container: {
     position: 'absolute',
+    bottom: 0,
     left: 0,
     right: 0,
-    bottom: 0,
-    height: DRAWER_HEIGHT,
     backgroundColor: 'white',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
+    borderTopLeftRadius: 24,
+    borderTopRightRadius: 24,
+    padding: 24,
     shadowColor: "#000",
-    shadowOffset: {
-      width: 0,
-      height: -2,
-    },
+    shadowOffset: { width: 0, height: -2 },
     shadowOpacity: 0.25,
     shadowRadius: 3.84,
     elevation: 5,
   },
-  bottomSheetHandle: {
+  handle: {
     width: 40,
     height: 4,
-    backgroundColor: '#00000020',
-    alignSelf: 'center',
-    marginBottom: 20,
+    backgroundColor: '#E5E5E5',
     borderRadius: 2,
+    alignSelf: 'center',
+    marginBottom: 16,
   },
-  shareOption: {
+  title: {
+    fontSize: 24,
+    fontWeight: 'bold',
+    marginBottom: 24,
+    textAlign: 'center',
+  },
+  shareButton: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 15,
-    borderBottomWidth: 1,
-    borderBottomColor: '#00000010',
+    justifyContent: 'center',
+    backgroundColor: '#3A3A3A',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 24,
   },
-  shareOptionText: {
-    marginLeft: 15,
+  shareButtonText: {
+    color: 'white',
     fontSize: 16,
-    color: '#3A3A3A',
+    marginLeft: 8,
   },
 });
+
+ShareDrawer.displayName = 'ShareDrawer';

@@ -14,14 +14,14 @@ import Animated, {
 } from 'react-native-reanimated';
 import { LinearGradient } from 'expo-linear-gradient';
 
-// Type definitions
-interface Step {
+// Define our own interface for analyzing steps
+interface AnalyzingStep {
   icon: keyof typeof Ionicons.glyphMap;
   text: string;
 }
 
 interface StepItemProps {
-  step: Step;
+  step: AnalyzingStep;
   index: number;
   currentStep: number;
 }
@@ -42,7 +42,7 @@ const timingConfig: WithTimingConfig = {
   duration: 500
 };
 
-const steps: Step[] = [
+const steps: AnalyzingStep[] = [
   { icon: 'color-palette-outline', text: "Analyzing skin tone" },
   { icon: 'sparkles-outline', text: "Determining color harmony" },
   { icon: 'sunny-outline', text: "Evaluating warm colors" },

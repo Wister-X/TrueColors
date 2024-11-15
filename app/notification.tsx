@@ -6,27 +6,12 @@ import { StorageUtils } from '../utils/storage';
 
 export default function NotificationScreen() {
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
-  const [hasResults, setHasResults] = useState(false);
   const router = useRouter();
 
-  useEffect(() => {
-    checkResultsStatus();
-  }, []);
-
-  const checkResultsStatus = async () => {
-    const results = await StorageUtils.getHasResults();
-    setHasResults(results);
-  };
-
-  const toggleNotifications = async () => {
+  const toggleNotifications = () => {
     setNotificationsEnabled(prev => !prev);
-    setTimeout(async () => {
-      const hasStoredResults = await StorageUtils.getHasResults();
-      if (hasStoredResults) {
-        router.replace('/src/screens/main/home');
-      } else {
-        router.replace('/(tabs)/camera');
-      }
+    setTimeout(() => {
+      router.replace('/home');
     }, 500);
   };
 

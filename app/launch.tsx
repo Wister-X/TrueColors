@@ -34,7 +34,7 @@ export default function LaunchScreen() {
       ]),
     ]).start(() => {
       // Navigate to rate screen after animation completes
-      router.replace('/src/screens/main/rate-screen')
+      router.replace('/rate')
     })
   }, [fadeAnim, scaleAnim])
 

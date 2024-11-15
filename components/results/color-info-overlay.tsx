@@ -1,86 +1,127 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import React, { useEffect } from 'react';
+import { View, StyleSheet, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Animated, { 
   useAnimatedStyle, 
   useSharedValue, 
-  withSpring, 
-  interpolateColor 
+  withSpring,
+  interpolateColor,
+  FadeInDown
 } from 'react-native-reanimated';
+import { ThemedText } from '@/components/ThemedText';
+import { ThemedView } from '@/components/ThemedView';
+import { ColorInfo, SeasonData } from '@/data/interfaces/interfaces-definition';
+import { ANIMATION_DELAYS, SPRING_CONFIG } from './animation-config';
 
-interface Color {
-  name: string;
-  hex: string;
-}
+const AnimatedThemedView = Animated.createAnimatedComponent(ThemedView);
+const AnimatedThemedText = Animated.createAnimatedComponent(ThemedText);
 
-interface SeasonData {
-  textColor: string;
-  accentColor: string;
-}
-
-interface ColorInfoOverlayProps {
-  color: Color;
+export interface ColorOverlayProps {
+  color: ColorInfo;
   onClose: () => void;
   seasonData: SeasonData;
 }
 
-export const ColorInfoOverlay: React.FC<ColorInfoOverlayProps> = React.memo(({ 
+export const ColorInfoOverlay: React.FC<ColorOverlayProps> = React.memo(({ 
   color, 
   onClose, 
   seasonData 
 }) => {
+  const overlayOpacity = useSharedValue(0);
   const translateY = useSharedValue(100);
-  const opacity = useSharedValue(0);
 
-  React.useEffect(() => {
-    translateY.value = withSpring(0);
-    opacity.value = withSpring(1);
+  useEffect(() => {
+    overlayOpacity.value = withSpring(1, SPRING_CONFIG);
+    translateY.value = withSpring(0, SPRING_CONFIG);
   }, []);
 
+  const handleClose = React.useCallback(() => {
+    overlayOpacity.value = withSpring(0, SPRING_CONFIG);
+    translateY.value = withSpring(100, SPRING_CONFIG);
+    setTimeout(onClose, 300);
+  }, [onClose]);
+
   const overlayStyle = useAnimatedStyle(() => ({
+    opacity: overlayOpacity.value,
     transform: [{ translateY: translateY.value }],
-    opacity: opacity.value,
+  }));
+
+  const backgroundStyle = useAnimatedStyle(() => ({
     backgroundColor: interpolateColor(
-      opacity.value,
+      overlayOpacity.value,
       [0, 1],
-      ['rgba(255,255,255,0)', 'rgba(255,255,255,0.9)']
+      ['transparent', 'rgba(0, 0, 0, 0.5)']
     ),
   }));
 
-  const handleClose = () => {
-    translateY.value = withSpring(100);
-    opacity.value = withSpring(0);
-    setTimeout(onClose, 300);
-  };
-
   return (
-    <Animated.View style={[styles.colorInfoOverlay, overlayStyle]}>
-      <View style={[styles.colorInfoSwatch, { backgroundColor: color.hex }]} />
-      <Text style={[styles.colorInfoName, { color: seasonData.textColor }]}>{color.name}</Text>
-      <Text style={[styles.colorInfoHex, { color: seasonData.accentColor }]}>{color.hex}</Text>
-      <TouchableOpacity onPress={handleClose} style={styles.closeButton}>
-        <Ionicons name="close" size={24} color={seasonData.textColor} />
-      </TouchableOpacity>
+    <Animated.View style={[styles.overlay, backgroundStyle]}>
+      <AnimatedThemedView 
+        style={[styles.content, overlayStyle]}
+        entering={FadeInDown.delay(ANIMATION_DELAYS.OVERLAY).springify()}
+      >
+        <View style={[styles.colorSwatch, { backgroundColor: color.hex }]} />
+        <AnimatedThemedText
+          type="title"
+          style={[styles.colorName, { color: seasonData.textColor }]}
+          entering={FadeInDown.delay(ANIMATION_DELAYS.TITLE).springify()}
+        >
+          {color.name}
+        </AnimatedThemedText>
+        <AnimatedThemedText
+          style={[styles.colorHex, { color: seasonData.accentColor }]}
+          entering={FadeInDown.delay(ANIMATION_DELAYS.SUBTITLE).springify()}
+        >
+          {color.hex}
+        </AnimatedThemedText>
+        <AnimatedThemedText
+          style={[styles.colorDescription, { color: seasonData.textColor }]}
+          entering={FadeInDown.delay(ANIMATION_DELAYS.CONTENT).springify()}
+        >
+          {color.description}
+        </AnimatedThemedText>
+        <TouchableOpacity 
+          onPress={handleClose} 
+          style={styles.closeButton}
+        >
+          <Ionicons 
+            name="close" 
+            size={24} 
+            color={seasonData.textColor} 
+          />
+        </TouchableOpacity>
+      </AnimatedThemedView>
     </Animated.View>
   );
 });
 
 const styles = StyleSheet.create({
-  colorInfoOverlay: {
+  overlay: {
     position: 'absolute',
-    bottom: 0,
+    top: 0,
     left: 0,
     right: 0,
-    padding: 20,
+    bottom: 0,
+    justifyContent: 'center',
     alignItems: 'center',
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
   },
-  colorInfoSwatch: {
+  content: {
+    backgroundColor: 'white',
+    borderRadius: 24,
+    padding: 24,
+    width: '80%',
+    alignItems: 'center',
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+    elevation: 5,
+  },
+  colorSwatch: {
     width: 100,
     height: 100,
     borderRadius: 50,
-    marginBottom: 10,
+    marginBottom: 16,
     borderWidth: 2,
     borderColor: 'white',
     shadowColor: '#000',
@@ -89,18 +130,27 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
     elevation: 3,
   },
-  colorInfoName: {
+  colorName: {
     fontSize: 24,
     fontWeight: 'bold',
-    marginBottom: 5,
+    marginBottom: 8,
+    textAlign: 'center',
   },
-  colorInfoHex: {
+  colorHex: {
     fontSize: 18,
+    marginBottom: 16,
+  },
+  colorDescription: {
+    fontSize: 16,
+    textAlign: 'center',
+    lineHeight: 24,
   },
   closeButton: {
     position: 'absolute',
-    top: 10,
-    right: 10,
-    padding: 10,
+    top: 16,
+    right: 16,
+    padding: 8,
   },
 });
+
+ColorInfoOverlay.displayName = 'ColorInfoOverlay';
